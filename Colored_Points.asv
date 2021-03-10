@@ -35,17 +35,15 @@ for Xinit = -xLabel/2 : xLabel/2
         
         
         % 将仿真时间段进行单位化
-        [t,x] = ode45(@DynamicEq02,[0 t_term],X0);
+        [t,x] = ode45(@DynamicEq02,[0:t_term],X0);
         
-        [Xhalf,Time_Needed] = Grid_Search(x,t);
+        [Xhalf,Time_Needed] = Grid_Search(x);
         
-        % 还原时间单位为天
-        Time_Needed = 2*Time_Needed*Tu/3600/24;
-        % 还原速度单位为秒
+        
         Dy = Xhalf(5)*Lu/Tu;
         XOYPot(Row,1) = Xinit;
         XOYPot(Row,2) = Dyinit;
-        XOYPot(Row,3) = Time_Needed;
+        XOYPot(Row,3) = t;
         XOYPot(Row,4) = Dy;
         Row = Row-1;
     end
