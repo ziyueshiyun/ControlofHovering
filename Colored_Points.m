@@ -6,27 +6,29 @@ function [XOYPot] = Colored_Points()
 Tu = 6.5e6;
 Lu = 1.1e5;
 % 确定二维图形的x坐标和y坐标范围取点数为60 x 80
-% 其中x坐标代表初始x坐标，单位为km y坐标代表初始y速度，单位为cm/s
-xLabel = 60;
+% 其中x坐标代表初始x坐标，单位为m y坐标代表初始y速度，单位为cm/s
+xLabel = 60000;
 yLabel = 80;
 
 % 用一个4800行4列的矩阵来存储x坐标，y坐标以及对应周期，速度变化量cm/s
-Row = xLabel*yLabel;
+% Row = xLabel*yLabel;
 
-XOYPot = zeros(xLabel*yLabel,4);
-% 初始仿真时间设置为0，结束仿真时间设置为T_term 假设整个周期最长为40天
+XOYPot = zeros(56,4);
+% 初始仿真时间设置为0，结束仿真时间设置为T_term 假设整个周期最长为20天
 
 % 仿真持续时间为半个周期长度
-t_term = 20*24*3600/Tu;
+t_term = 100*24*3600/Tu;
 
 % 每个点使用ode45函数所生成的矩阵行数
 % OdeRow = t_term / 0.001;
 
+% 统计新生成的矩阵的行数
+Row = 1;
         
-for Xinit = -xLabel/2 : xLabel/2
-    for Dyinit = -yLabel/2 : yLabel/2
+for Xinit = -xLabel/2 :10000: xLabel/2
+    for Dyinit = -yLabel/2 :10: yLabel/2
         
-        % 对于坐标为x0,Dy0的点
+        % 对于坐标为x0,Dy0的点先对单位进行归一化
         x0 = Xinit/Lu;
         Dy0 = Dyinit/100/Lu/(1/Tu);
         
@@ -40,14 +42,16 @@ for Xinit = -xLabel/2 : xLabel/2
         [Xhalf,Time_Needed] = Grid_Search(x,t);
         
         % 还原时间单位为天
-        Time_Needed = 2*Time_Needed*Tu/3600/24;
-        % 还原速度单位为秒
+        Time_Needed = abs(2*Time_Needed*Tu/3600/24);
+        % 还原速度单位为米每秒
         Dy = Xhalf(5)*Lu/Tu;
+        
+        
         XOYPot(Row,1) = Xinit;
         XOYPot(Row,2) = Dyinit;
         XOYPot(Row,3) = Time_Needed;
         XOYPot(Row,4) = Dy;
-        Row = Row-1;
+        Row = Row+1;
     end
 end
 
