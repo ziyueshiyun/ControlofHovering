@@ -18,10 +18,10 @@ dz = X(6);
 % 控制推力加速度大小计算函数
 
 % Tdb代表第一种控制方式
-t1 = Tdb(x,y,z,PosInit);
+% t1 = Tdb(x,y,z,PosInit);
 
 % IATNS代表第二种控制方式
-% t1 = IATNS(x,y,z,PosInit);
+t1 = IATNS(x,y,z,PosInit);
 %x4 = 2*w*x(5) -(mu*x)/(x^2 + y^2 + z^2)^(3/2)
 % dx = X(4);
 % dy = X(5);

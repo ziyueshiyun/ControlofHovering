@@ -24,9 +24,9 @@ for i = 1:row
     end
     
 end
-Radius = (x0^2+y0^2+z0^2);
-tan_2x = Distance/Radius;
-tan_x = ((1+tan_2x^2)^(1/2)-1)/tan_2x;
+Radius = (x0^2+y0^2+z0^2)^(1/2);
+tan_x = Distance/Radius;
+% tan_x = ((1+tan_2x^2)^(1/2)-1)/tan_2x;
 cos_x = 1/(1+tan_x^2)^(1/2);
 
 SA = 2*pi*(1-cos_x);

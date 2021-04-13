@@ -12,9 +12,10 @@ T = Points;
 
 for i = 1:row
     pos_init = Points(i,:);
-    x0 = [pos_init(1),pos_init(2),pos_init(3),0,0.3,0.3];
+    x0 = [pos_init(1),pos_init(2),pos_init(3),2,-2,0];
     [t,x] = ode45(@DynamicEq,[0:24000],x0,[],pos_init);
-    T(i,4) = Solid_Angle(x,pos_init);
+    T(i,4) = Solid_Angle(x,pos_init)*pi/180;
+    i
 end
 
 
