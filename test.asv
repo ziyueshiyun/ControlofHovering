@@ -7,7 +7,10 @@ Tu = 6.5e6;
 Lu = 1.1e5;
 % 如果在xz平面上的起始位置被设定为（x0,0,z0)
 % 然后对应的初始速度设定为(0,y'0,0)
+
+%x 初始位置
 Xinit = 10000;
+%y 初始速度
 DYinit = 5;
 % 取初始位置坐标为(10000m,0,0) , 初始速度为(0,5cm/s,0)
 % 进行积分计算，当y坐标第一次变为0时刻即为半个周期的长度
@@ -24,16 +27,16 @@ Dy0 = DYinit/100/Lu/(1/Tu);
 X0 = [x0,0,0,0,Dy0,0];
 
 % 初始仿真时间设置为0，结束仿真时间设置为T_term 假设半个周期最长为20天
-t_term = 10*24*3600/Tu;
+t_term = 20*24*3600/Tu;
 % 将仿真时间段进行单位化
-[t,x] = ode45(@DynamicEq02,[0:0.0001:t_term],X0);
-plot(x(:,1),x(:,2));
+% [t,x] = ode45(@DynamicEq02,[0,t_term],X0);
+% plot(x(:,1),x(:,2));
 
 % 发现Y坐标第一次变为0的时间为第76个步长时刻，即为0.001 * 76 * Tu
 % T01 = 0.001 * 76 * Tu * 2/24/3600 = 11.4352天
 % 即当取初始位置坐标为(10000m,0,0) , 初始速度为(0,5cm/s,0)时，
 % 轨道的周期长度为11.4天左右，此时刻探测器的x轴坐标速度为4.1301
-% 进行还原即可得到 
+% 进行还原即可得到
 % v = 4.1301 * Lu/Tu = 0.0699m/s
 % 也就是说所需要的速度大小仅仅为7cm/s，方向与x轴方向相反
 
@@ -55,6 +58,147 @@ plot(x(:,1),x(:,2));
 % 不同的颜色标注出在Xinit,Dyinit二维平面图上
 % 函数名叫Colored_Points
 
-10 + 10 + 7 + 7 + 
+% 为何在Colored_Points里面部分数据出现积分误差过大的情况
+% 再试试用同样的方法，不适用Colored_Points所积分得到的结果
+
+% 1.试验meshgrid产生的是什么向量？
+% x1 = 0:6;
+% x2 = 1:4;
+%
+% [X1,X2] = meshgrid(x1,x2);
+
+% 产生的X1 , X2 均为4 x 7的矩阵 即假如x1 = 1xn向量
+% x2 = 1xm 向量 则 X1 = mxn向量 X2 = mxn向量
+% 不同的是，X1的每一行都是x1 X2的每一列都是x2'
+% 而X1 Y1的相对坐标恰好组成了mxn个点的横纵坐标
+
+% 开始进行绘图工作，从最简单的规则开始，在xoy平面中用不同颜色的点来标注
+% 各个不同的初始条件下所产生的周期轨道的特征
+% %
+
+% %起始x坐标
+% a0 = Colored_Points;
+% x = a0(:,1);
+%
+% %起始y坐标
+% dyi = a0(:,2);
+%
+% %轨道周期天
+% T = a0(:,3);
+%
+% %半周期后速度
+% dy = a0(:,4);
+%
+% %半周期后x位置
+% xt = a0(:,5);
+% % figure
+% % plot(x,dy,'k.')
+% % 决定改用scatter
+%
+% scatter(x,dyi,dyi)
+
+%如何绘制对称图形？
+FormerHalf = x(1:64,:);
+LaterHalf = -x(1:64,2);
+LH = FormerHalf;
+LH(:,2) = LaterHalf;
+Result = cat(1,FormerHalf,LH);
+% plot(Result(:,1),Result(:,2));
+plot(x(1:64,1),x(1:64,2));
+hold on;
+plot(LH(1:64,1),LH(1:64,2));
 
 
+% Orbit_Result = Colored_Points;
+% 可能是积分步长出现了问题，需要对积分步长也进行归一化
+% 同时需要加入事件函数，加入停止积分条件，即y第一次等于0
+% 也可以使用y第一次变号的位置
+
+op = odeset('Events',@EventFun);
+[t,x,Tend,Xend,evenum] = ode45(@DynamicEq02,[0,t_term],X0,op);
+x1 = x(:,1);
+y1 = x(:,2);
+z1 = x(:,3);
+scatter(x1,y1);
+
+Orbit_Result = Colored_Points;
+
+% 对轨道类型进行分类
+Row = size(Orbit_Result,1);
+
+% 无法形成周期轨道的点
+New_Results = zeros(1,5);
+
+% 首先剔除时间小于0.01天的轨道，那些都是无法在二十天内
+% 环绕半圈后使得y再次变为0的轨道
+icount = 1;
+for i = 1:Row
+    if Orbit_Result(i,3)>0.01
+        New_Results(icount,:) = Orbit_Result(i,:);
+        icount  = icount +1;
+    end
+end
+
+% x1 = New_Results(:,1);
+% y1 = New_Results(:,2);
+% Time = New_Results(:,3);
+% Terminal_Speed = New_Results(:,4);
+% X_Terminal = New_Results(:,5);
+
+
+
+% Xinit > 0 , Xterm < 0,dy > 0 顺行心形轨道
+Pho = zeros(1,5);
+Pho_Num = 1;
+% Xinit > 0 , Xterm < 0,dy < 0 逆行心形轨道
+Rho = zeros(1,5);
+Rho_Num = 1;
+% Xinit < 0,  Xterm > 0,dy > 0 逆行泪形轨道
+Rto = zeros(1,5);
+Rto_Num = 1;
+% Xinit < 0,  Xterm > 0,dy < 0 顺行泪形轨道
+Pto = zeros(1,5);
+Pto_Num = 1;
+% Xinit < 0,  Xterm < 0  白天轨道
+Do = zeros(1,5);
+Do_Num = 1;
+% Xinit > 0,  Xterm > 0  夜间轨道
+No = zeros(1,5);
+No_Num = 1;
+
+jcount = size(New_Results,1);
+
+for j = 1:jcount
+    if New_Results(j,1) >0 && New_Results(j,5)<0 && New_Results(j,2)<0
+        Pho(Pho_Num,:) = New_Results(j,:);
+        Pho_Num = Pho_Num + 1;
+    elseif New_Results(j,1) >0 && New_Results(j,5)<0 && New_Results(j,2)>0
+        Rho(Rho_Num,:) = New_Results(j,:);
+        Rho_Num = Rho_Num + 1;
+    elseif New_Results(j,1) < 0 && New_Results(j,5)>0 && New_Results(j,2)>0
+        Rto(Rto_Num,:) = New_Results(j,:);
+        Rto_Num = Rto_Num +1;
+    elseif New_Results(j,1) < 0 && New_Results(j,5)>0 && New_Results(j,2)<0
+        Pto(Pto_Num,:) = New_Results(j,:);
+        Pto_Num = Pto_Num + 1;
+    elseif New_Results(j,1) < 0 && New_Results(j,2)<0
+        Do(Do_Num,:) = New_Results(j,:);
+        Do_Num = Do_Num + 1;
+    else
+        No(No_Num,:) = New_Results(j,:);
+        No_Num = No_Num + 1;
+    end
+
+end
+
+scatter(Pho(:,1),Pho(:,2),20,'r');
+hold on;
+scatter(Rho(:,1),Rho(:,2),20,'b');
+hold on;
+scatter(Rto(:,1),Rto(:,2),20,'g');
+hold on; 
+scatter(Pto(:,1),Pto(:,2),20,'k');
+hold on; 
+scatter(Do(:,1),Do(:,2),20,'m');
+hold on; 
+scatter(No(:,1),No(:,2),20,'y');
