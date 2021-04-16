@@ -128,14 +128,18 @@ Row = size(Orbit_Result,1);
 
 % 无法形成周期轨道的点
 New_Results = zeros(1,5);
-
+Other_Results = zeros(1,5);
 % 首先剔除时间小于0.01天的轨道，那些都是无法在二十天内
 % 环绕半圈后使得y再次变为0的轨道
 icount = 1;
+kcount = 1;
 for i = 1:Row
-    if Orbit_Result(i,3)>0.01
+    if Orbit_Result(i,3)>0.01 && abs(Orbit_Result(i,5))>500
         New_Results(icount,:) = Orbit_Result(i,:);
         icount  = icount +1;
+    else
+        Other_Results(kcount,:) = Orbit_Result(i,:);
+        kcount = kcount+1;
     end
 end
 
@@ -165,7 +169,7 @@ Do_Num = 1;
 % Xinit > 0,  Xterm > 0  夜间轨道
 No = zeros(1,5);
 No_Num = 1;
-
+% 其他轨道？
 jcount = size(New_Results,1);
 
 for j = 1:jcount
@@ -187,6 +191,8 @@ for j = 1:jcount
     elseif New_Results(j,1) > 0 && New_Results(j,2)>0
         No(No_Num,:) = New_Results(j,:);
         No_Num = No_Num + 1;
+   
+        
     end
 
 end
@@ -202,3 +208,39 @@ hold on;
 scatter(Do(:,1),Do(:,2),20,'m');
 hold on; 
 scatter(No(:,1),No(:,2),20,'y');
+hold on;
+scatter(Other_Results(:,1),Other_Results(:,2),20,'c');
+
+% 前面仍然忽略了一个条件，就是探测器的轨迹在运行过程中，
+% 一定不能撞上小天体，如何把这个限定条件加进去？
+
+% 作图八张左右，首先Xinit = 10km Dyinit = 0
+Tu = 6.5e6;
+Lu = 1.1e5;
+%x 初始位置
+Xinit = 7000;
+%y 初始速度
+DYinit = -11;
+x0 = Xinit/Lu;
+Dy0 = DYinit/100/Lu/(1/Tu);
+X0 = [x0,0,0,0,Dy0,0];
+t_term = 40*24*3600/Tu;
+op = odeset('Events',@EventFun);
+[t,x,Tend,Xend,evenum] = ode45(@DynamicEq02,[0,t_term],X0,op);
+x1 = x(:,1)*Lu/1000;
+y1 = x(:,2)*Lu/1000;
+z1 = x(:,3)*Lu/1000;
+plot(x1,y1)
+xlim([-10,50]);
+hold on;
+
+% 如何画出转回去的轨迹？
+X1 = Xend(end,:);
+X1(4) = -X1(4);
+[t1,x1,Tend1,Xend1,evneum1] = ode45(@DynamicEq02,[0,t_term],X1,op);
+x2 = x1(:,1)*Lu/1000;
+y2 = x1(:,2)*Lu/1000;
+z2 = x1(:,3)*Lu/1000;
+plot(x2,y2)
+
+2*t(end)*Tu/3600/24
